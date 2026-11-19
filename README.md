@@ -15,7 +15,7 @@ starts with no egress, and never holds credentials. This repo tests those claims
 3. **Two targets**: POC on kind (from the pinned v1.0.0 source, as upstream CI does) and an
    experimental EKS pilot (Terraform, S3 snapshots through Pod Identity, published release images).
 
-Bible (visual walkthrough, architecture, results): [`site/index.html`](site/index.html), also a tab in the Study Bible.
+Bible (visual walkthrough, end-to-end architecture diagram, checks, run commands): [`site/index.html`](site/index.html), deployed on Vercel from this repo and also a tab in the Study Bible.
 
 ## The checks
 
