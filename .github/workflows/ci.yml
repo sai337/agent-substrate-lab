@@ -1,0 +1,29 @@
+name: ci
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.23" }
+      - name: memory-agent (vet + test)
+        working-directory: app/memory-agent
+        run: test -z "$(gofmt -l .)" && go vet ./... && go test -race ./...
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -e '.[test]' && pytest -q
+      - run: shellcheck e2e/*.sh infra/eks/*.sh
+      - name: Agent image builds
+        run: docker build -t memory-agent:ci app/memory-agent
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - working-directory: infra/eks/terraform
+        run: (terraform fmt -check -recursive || echo "::warning::run terraform fmt -recursive") && terraform init -backend=false -input=false && terraform validate

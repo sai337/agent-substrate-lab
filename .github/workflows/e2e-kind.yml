@@ -1,0 +1,56 @@
+name: e2e-kind
+# POC end to end, mirroring Agent Substrate's own kind e2e job (ubuntu-latest,
+# local registry on localhost:5001, `ate-setup --kind`), then our checks.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "41 10 * * *"   # nightly
+permissions:
+  contents: read
+concurrency:
+  group: e2e-kind-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pinned Agent Substrate source
+        uses: actions/checkout@v4
+        with:
+          repository: agent-substrate/substrate
+          ref: v1.0.0
+          path: .work/substrate
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: .work/substrate/go.mod
+          cache: false
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: network=host
+          buildkitd-config-inline: |
+            [registry."localhost:5001"]
+              http = true
+      - uses: helm/kind-action@v1.12.0
+        with: { install_only: true }
+      - name: Bring up Substrate + memory agent
+        run: bash e2e/up.sh
+      - name: Run the checks
+        run: bash e2e/run.sh
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          kubectl get pods -A -o wide || true
+          kubectl ate get actors -a lab-agents || true
+          kubectl ate get workers || true
+          kubectl -n ate-system logs deployment/atenet-egress --all-containers --tail=200 || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: substrate-checks-kind
+          path: evals/results/

@@ -1,0 +1,14 @@
+# SubstrateInstall for EKS (installer config document, docs/guides/operator-install.md).
+# Uses the published v1.0.0 release images instead of building with ko.
+apiVersion: install.ate.dev/v1alpha1
+kind: SubstrateInstall
+namespace: ate-system
+atenet:
+  dataplane: envoy
+images:
+  repo: ghcr.io/agent-substrate/substrate
+  tag: ${SUBSTRATE_VERSION}
+storage:
+  bucketName: ${SNAPSHOT_BUCKET}
+  snapshotLocation: s3://${SNAPSHOT_BUCKET}/
+ingressAllowedSPIFFEIDs: spiffe://cluster.local/ns/ate-system/sa/atenet-client
