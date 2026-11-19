@@ -1,0 +1,28 @@
+# WorkerPool for the memory agent. ${WORKER_IMAGE} is copied from the upstream
+# counter demo's pool at deploy time, so the worker matches the installed
+# Substrate build exactly. Shape follows demos/counter/counter.yaml.tmpl (v1.0.0).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab-agents
+---
+apiVersion: ate.dev/v1
+kind: WorkerPool
+metadata:
+  name: memory-agent
+  namespace: lab-agents
+  labels:
+    workload: memory-agent
+spec:
+  replicas: ${WORKERS}
+  workerImage: ${WORKER_IMAGE}
+  sandboxClasses:
+    - name: gvisor
+  template:
+    resources:
+      limits:
+        cpu: "1"
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 1Gi

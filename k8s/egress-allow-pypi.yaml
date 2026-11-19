@@ -1,0 +1,4 @@
+# EgressPolicy for one actor: HTTPS to pypi.org only. Everything else stays
+# denied (an actor with no policy gets no egress tunnel at all).
+rules:
+  - https: {hostnames: ["pypi.org"]}

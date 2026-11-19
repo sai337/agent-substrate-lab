@@ -1,0 +1,48 @@
+# ActorTemplate (protojson-shaped ateapi.ActorTemplate), applied with
+# `kubectl ate create actor-template -f -`. MEMORY fidelity: a suspend captures
+# process RAM, root filesystem writes and the durable volume.
+# Shapes follow demos/counter and demos/egress at v1.0.0.
+metadata:
+  atespace: lab-agents
+  name: memory-agent
+workerSelector:
+  matchLabels:
+    workload: memory-agent
+containers:
+  - name: agent
+    image: ${AGENT_IMAGE}
+    command:
+      - /memory-agent
+      - --port=8080
+      - --data=/home/agent
+    # The egress gateway terminates TLS for `https` rules with certificates from
+    # its own CA. SSL_CERT_FILE adds that CA; Go still reads /etc/ssl/certs.
+    env:
+      - name: SSL_CERT_FILE
+        value: /run/ate/trust-bundle.pem
+    wakeupProbe:
+      httpGet:
+        path: /readyz
+        port: 8080
+      timeoutSeconds: 120
+    volumeMounts:
+      - name: data
+        mountPath: /home/agent
+      - name: system-info
+        mountPath: /run/ate
+resources:
+  limits:
+    cpuMillicores: 500
+    memoryBytes: 268435456 # 256Mi
+snapshotConfig:
+  preferredFidelity: SNAPSHOT_FIDELITY_MEMORY
+volumes:
+  - name: data
+    durableDir: {}
+  - name: system-info
+    systemInfo:
+      dataSources:
+        - trustBundle:
+            names:
+              - egress-mitm.ate.dev
+            path: trust-bundle.pem

@@ -1,0 +1,26 @@
+[project]
+name = "sublab"
+version = "0.1.0"
+description = "Checks that Agent Substrate keeps its promises for stateful, untrusted agents: snapshots, multiplexing, egress, isolation"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [{ name = "sai337" }]
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=8.3,<9"]
+
+[project.scripts]
+sublab = "sublab.cli:main"
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["app"]
+include = ["sublab*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["app"]
+testpaths = ["tests/unit"]
