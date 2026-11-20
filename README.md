@@ -67,11 +67,11 @@ make poc-down
 |---|---|---|---|
 | Agent workload | 10 | `app/memory-agent` with 5 Go tests (state, restart, egress, secret scan) | - |
 | Harness + gate | 10 | `tests/unit/test_checks.py`: healthy model passes, each broken guarantee is caught | - |
-| POC e2e on kind | 8 | `e2e/up.sh` mirrors upstream's own kind job | first green `e2e-kind` run |
+| POC e2e on kind | 10 | 8/8 pass, gate PASS: [run 44691545841](https://github.com/sai337/agent-substrate-lab/actions/runs/44691545841) | - |
 | EKS path | 6 | Terraform (S3 + Pod Identity), release images, `eks-e2e.yml` | EKS is not an upstream-tested target; one real run will need fixes |
 | Docs | 9 | `docs/` | measured numbers in the blog draft |
 
-Resume times from kind are not comparable to the vendor's GKE figure (<500 ms, vendor-reported).
+Measured on kind in GitHub Actions (20 Nov 2026): resume p50 139 ms / p95 168 ms over 12 actors, suspend 180 ms, new actor to first answer 1.2 s, actor kernel `4.19.0-gvisor`, 4 actors per worker with no state lost. One run on a shared CI runner; not comparable to the vendor's GKE figure (<500 ms).
 
 ## Licence
 
