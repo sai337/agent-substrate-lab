@@ -4,7 +4,7 @@ Checked 2026-11-19 in a throwaway workspace. Source was read and scanned; nothin
 
 | Component | Source | Pin | Verdict |
 |---|---|---|---|
-| Agent Substrate | github.com/agent-substrate/substrate (CNCF Sandbox, Apache-2.0, govulncheck in CI) | v1.0.0 = `fd67f6204a7c287f658d080f6196ba1638744a10` | AMBER: large codebase (14k files incl. vendor/), not read line by line |
+| Agent Substrate | github.com/agent-substrate/substrate (CNCF Sandbox, Apache-2.0, govulncheck in CI) | v1.0.0, commit `b34fbee742906494b5eb4f1f36987176bf8770a4` | AMBER: large codebase (14k files incl. vendor/), not read line by line |
 | Substrate release images (EKS) | ghcr.io/agent-substrate/substrate, published by the project's release workflow | tag v1.0.0; pin digests on first pull | AMBER |
 | golang:1.23, distroless/static | official images | tags; pin digests in your registry | GREEN |
 
