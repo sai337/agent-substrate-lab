@@ -83,7 +83,7 @@ class AteDriver:
                                input=fh.read(), capture_output=True, text=True, timeout=60)
         if p.returncode != 0:
             raise RuntimeError(f"create egress-policy {name}: {p.stderr.strip()}")
-        time.sleep(3)  # policy refresh reaches the gateway asynchronously
+        # the caller polls until the policy is effective (DNS relay refresh is ~5 s)
 
     def workers(self) -> int:
         out = subprocess.run([self.kubectl, "ate", "get", "workers", "-o", "json"], capture_output=True, text=True, timeout=60)

@@ -124,9 +124,15 @@ def run_all(d, actors: int, egress_policy: str, resume_budget_ms: float | None =
         c = Check("SUB-05", "EgressPolicy allows only the listed host", "critical")
         try:
             d.set_egress(probe, egress_policy)
+            # Upstream: a new policy reaches the actor's DNS relay "within about 5 seconds".
+            t0 = time.monotonic()
             allowed = _fetch(d, probe, "https://pypi.org/simple/").body
+            while not allowed.get("ok") and time.monotonic() - t0 < float(os.environ.get("SUBLAB_POLICY_WAIT_S", "30")):
+                time.sleep(2)
+                allowed = _fetch(d, probe, "https://pypi.org/simple/").body
+            c.metrics["policy_effective_after_s"] = round(time.monotonic() - t0, 1)
             other = _fetch(d, probe, "https://example.com/").body
-            c.metrics = {"pypi_with_policy": allowed, "example_com": other}
+            c.metrics.update({"pypi_with_policy": allowed, "example_com": other})
             if not allowed.get("ok"):
                 c.status, c.note = "fail", "allowed host was blocked"
             elif other.get("ok"):
