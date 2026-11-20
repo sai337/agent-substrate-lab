@@ -22,6 +22,24 @@ def test_healthy_substrate_passes_every_check():
     assert r["SUB-02"]["metrics"]["samples"] == 12
 
 
+def test_harness_never_needs_more_running_actors_than_workers():
+    d = FakeDriver(workers=3)
+    s = run_all(d, actors=12, egress_policy=POLICY, host_kernel="6.8.0")
+    assert s["gate"] == "pass" and d.max_running <= 3
+
+
+def test_silent_selfcheck_is_an_error_not_a_pass():
+    class Mute(FakeDriver):
+        def request(self, name, method, path, timeout=180):
+            if path.startswith("/selfcheck"):
+                from sublab.driver import Response
+                return Response(503, {"error": "no free worker"}, 1.0)
+            return super().request(name, method, path, timeout)
+
+    s = run_all(Mute(), actors=12, egress_policy=POLICY, host_kernel="6.8.0")
+    assert by_id(s)["SUB-06"]["status"] == "error" and "SUB-06" in s["blocking_failures"]
+
+
 @pytest.mark.parametrize(
     "flags,blocker",
     [

@@ -157,6 +157,8 @@ class FakeDriver:
         self._boots = 0
 
     def create(self, name):
+        if self._running() >= self.w:  # like Substrate: no free worker, no new running actor
+            raise RuntimeError("no free worker in pool")
         self._boots += 1
         self.actors[name] = _Actor(boot=self._boots)
         self._track()
@@ -185,16 +187,18 @@ class FakeDriver:
     def workers(self):
         return self.w
 
+    def _running(self):
+        return sum(1 for a in self.actors.values() if a.running)
+
     def _track(self):
-        running = [n for n, a in self.actors.items() if a.running]
-        while len(running) > self.w:  # a full pool evicts (suspends) the oldest idle actor
-            self.suspend(running.pop(0))
-        self.max_running = max(self.max_running, len(running))
+        self.max_running = max(self.max_running, self._running())
 
     def request(self, name, method, path, timeout=180):
         a = self.actors[name]
         ms = 5.0
         if not a.running:
+            if self._running() >= self.w:  # no free worker: the request cannot be served
+                return Response(503, {"error": "no free worker"}, 30000.0)
             a.running, ms = True, self.resume_ms
             self._track()
         if path.startswith("/remember"):

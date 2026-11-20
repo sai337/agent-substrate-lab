@@ -72,13 +72,17 @@ def run_all(d, actors: int, egress_policy: str, resume_budget_ms: float | None =
 
         # SUB-03 multiplexing many actors onto few workers
         c = Check("SUB-03", f"{actors} stateful actors share a small worker pool without losing state", "critical")
+        # Like real agents: work, then go idle (suspend) so the worker is free for the next one.
         for n in names[1:]:
             d.create(n)
             created.append(n)
             d.request(n, "POST", "/remember?note=hello")
-        for n in names[1:]:
             d.suspend(n)
-        bad = [n for n in names[1:] if d.request(n, "GET", "/recall").body.get("memory_count") != 1]
+        bad = []
+        for n in names[1:]:
+            if d.request(n, "GET", "/recall").body.get("memory_count") != 1:
+                bad.append(n)
+            d.suspend(n)
         workers = d.workers()
         ratio = round(actors / max(workers, 1), 2)
         c.metrics = {"actors": actors, "workers": workers, "actors_per_worker": ratio, "lost_state": bad}
@@ -91,11 +95,12 @@ def run_all(d, actors: int, egress_policy: str, resume_budget_ms: float | None =
         # SUB-02 resume latency across all actors (request-driven resume through the router)
         c = Check("SUB-02", "Suspended actors resume on demand within budget", "high")
         lat = []
-        for n in names:
-            d.suspend(n)
+        d.suspend(names[0])  # SUB-01 left it running
+        for n in names:  # every actor is suspended here; time the request-driven resume
             r = d.request(n, "GET", "/recall")
             if r.status == 200:
                 lat.append(r.ms)
+            d.suspend(n)
         c.metrics = {"samples": len(lat), "p50_ms": _pct(lat, 50), "p95_ms": _pct(lat, 95),
                      "max_ms": _pct(lat, 100), "budget_p95_ms": budget,
                      "vendor_claim_ms": VENDOR_RESUME_CLAIM_MS,
@@ -131,9 +136,12 @@ def run_all(d, actors: int, egress_policy: str, resume_budget_ms: float | None =
         out.append(c)
 
         # SUB-06 / SUB-07 what a hostile agent can see
-        info = d.request(probe, "GET", "/selfcheck").body
+        sc = d.request(probe, "GET", "/selfcheck")
+        info = sc.body
         c = Check("SUB-06", "No service-account token or secrets inside the actor", "critical", metrics=info)
-        if info.get("sa_token") or info.get("secret_env"):
+        if sc.status != 200 or "sa_token" not in info:
+            c.status, c.note = "error", f"self-check did not answer (status {sc.status}): {info}"
+        elif info.get("sa_token") or info.get("secret_env"):
             c.status, c.note = "fail", "credentials reachable from untrusted code"
         out.append(c)
         c = Check("SUB-07", "Actor runs on a sandbox kernel (gVisor), not the host kernel", "high",

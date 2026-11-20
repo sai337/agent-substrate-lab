@@ -25,7 +25,7 @@ def to_markdown(s: dict, title: str) -> str:
         lines.append(f"| {r['id']} | {r['status'].upper()} | {r['severity']} | {r['title']} | {json.dumps(keys) if keys else ''} |")
     bad = [r for r in s["results"] if r["status"] != "pass"]
     if bad:
-        lines += ["", "## Failures", ""] + [f"- **{r['id']}**: {r['note']}" for r in bad]
+        lines += ["", "## Failures", ""] + [f"- **{r['id']}**: {r['note']}\n  `{json.dumps(r['metrics'])[:600]}`" for r in bad]
     lines += ["", "Resume times are measured on this cluster through `kubectl ate proxy`. The vendor figure (<500 ms) is GKE-reported and not comparable to kind."]
     return "\n".join(lines) + "\n"
 
