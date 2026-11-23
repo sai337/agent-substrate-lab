@@ -77,6 +77,20 @@ def cmd_wait(a) -> int:
     return 1
 
 
+def cmd_diff(a) -> int:
+    from .policy_diff import diff_files
+
+    changes = diff_files(a.approved, a.candidate)
+    for tag, detail in changes:
+        print(f"{tag:6} {detail}")
+    widen = [c for c in changes if c[0] == "WIDEN"]
+    if widen and not a.approved_by:
+        print(f"G2 FAIL: {len(widen)} widening change(s) need owner + security approval (--approved-by)")
+        return 1
+    print("G2 PASS" + (f" (widening approved by {a.approved_by})" if widen else ""))
+    return 0
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="sublab")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -93,7 +107,13 @@ def main(argv=None) -> int:
     w.add_argument("--atespace", default="lab-agents")
     w.add_argument("--count", type=int, default=3)
     w.add_argument("--timeout", type=int, default=600)
+    d = sub.add_parser("policy-diff", help="G2 gate for EgressPolicy files")
+    d.add_argument("approved")
+    d.add_argument("candidate")
+    d.add_argument("--approved-by")
     a = p.parse_args(argv)
+    if a.cmd == "policy-diff":
+        return cmd_diff(a)
     if a.cmd == "wait":
         return cmd_wait(a)
     summary = run_all(AteDriver(atespace=a.atespace), a.actors, a.egress_policy)

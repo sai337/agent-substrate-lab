@@ -40,7 +40,7 @@ kubectl -n ate-system rollout status daemonset/atelet --timeout=300s
 
 aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "${REPO%%/*}"
 TAG="$(git -C "$ROOT" rev-parse --short HEAD)"
-docker build -q -t "$REPO:$TAG" "$ROOT/app/memory-agent"
+docker build -q --platform linux/amd64 -t "$REPO:$TAG" "$ROOT/app/memory-agent"  # EKS nodes are x86_64
 docker push -q "$REPO:$TAG"
 AGENT_IMAGE="$(docker inspect --format '{{index .RepoDigests 0}}' "$REPO:$TAG")"
 # Derive the worker image name from the installed atelet image (same repo and naming).

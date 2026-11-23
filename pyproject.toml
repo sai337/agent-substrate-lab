@@ -5,7 +5,7 @@ description = "Checks that Agent Substrate keeps its promises for stateful, untr
 requires-python = ">=3.11"
 license = "Apache-2.0"
 authors = [{ name = "sai337" }]
-dependencies = []
+dependencies = ["PyYAML>=6.0.2,<7"]
 
 [project.optional-dependencies]
 test = ["pytest>=8.3,<9"]
