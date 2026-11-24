@@ -19,3 +19,7 @@ Definition of done
 3. docs/EVALS.md results table has an EKS row (p50, p95, suspend, cold start, kernel).
 4. Any fix needed for EKS is recorded in docs/RUNBOOK.md and committed.
 5. `terraform destroy` completed.
+
+## Read first
+- docs/GUIDE.md explains every component, flow, command and signal in plain words. Use it to explain results to the owner.
+- docs/DEPLOYMENT.md is the exact EKS procedure. Personal lab AWS account only; destroy when done.

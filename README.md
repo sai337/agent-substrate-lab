@@ -1,5 +1,7 @@
 # agent-substrate-lab
 
+> New here? Read [docs/GUIDE.md](docs/GUIDE.md) first: the whole project in plain words, every component, every flow, every command, and how logs and metrics get out. For tomorrow's EKS run, follow [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 **Run thousands of stateful, untrusted agents on a few pods with CNCF Agent Substrate, and measure
 whether it keeps its promises.**
 
